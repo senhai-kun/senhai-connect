@@ -164,7 +164,7 @@ export default function Room() {
     const search = (e) => {
         e.preventDefault()
         setSearching(true)
-        axios.post('https://senhai-music-server.herokuapp.com/search', { query: query })
+        axios.post('https://senhai-connect-server.herokuapp.com/search', { query: query })
         .then( res => { 
             // console.log(res.data)
             setResult(res.data.result)
