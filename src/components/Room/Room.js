@@ -2,14 +2,14 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useHistory, useLocation } from 'react-router-dom'
 import io from 'socket.io-client'
 import { urlSocket } from './api'
-import { Container, IconButton, makeStyles, TextField, Typography, CircularProgress  } from '@material-ui/core'
-import axios from 'axios'
+import { Container, duration, makeStyles, Typography  } from '@material-ui/core'
 import { Row, Col, Media } from 'react-bootstrap'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
-import SearchIcon from '@material-ui/icons/Search';
-import { VideoPlayer } from './VideoPlayer'
+import VideoPlayer from './VideoPlayer'
 import { User } from './User'
 import SnackBar from './SnackBar'
+import { SearchBar } from './SearchBar'
+import { Element } from 'react-scroll'
 
 const styles = makeStyles( (theme) => ({
     root: {
@@ -21,15 +21,6 @@ const styles = makeStyles( (theme) => ({
     },
     backIcon: {
         marginRight: theme.spacing(1)
-    },
-    searchBtn: {
-        borderRadius: theme.spacing(0),
-        backgroundColor: '#303030',
-        paddingLeft: '20px',
-        paddingRight: '20px',
-        paddingTop: '8px',
-        paddingBottom: '8px',
-        marginLeft: ''
     },
     // video section
     videoWrapper: {
@@ -96,18 +87,29 @@ export default function Room() {
 
     const room = location.pathname.split('/')[2]
     const username = localStorage.getItem("username")
+    const [ host, setHost ] = useState('')
 
     const [ notif, setNotif ] = useState('')
-    const [ query, setQuery ] = useState("")
     const [ searching, setSearching ] = useState(false)
     const [ result, setResult ] = useState([])
     const [ video, setVideo ] = useState({
         playedBy: username,
-        title: 'ReoNa - ANIMA / THE FIRST TAKE',
-        channel: 'THE FIRST TAKE',
-        url: 'https://www.youtube.com/watch?v=r-4XumkB2Yg',
-        uploadedAt: 'Oct 9, 2020'
+        title: '[MV] Red - Calliope Mori #HololiveEnglish #HoloMyth',
+        channel: 'Mori Calliope Ch. hololive-EN',
+        url: 'https://www.youtube.com/watch?v=-AuQZrUHjhg',
+        uploadedAt: '1 month ago',
+        length: 223000,
+        direct: false
     })
+
+    useEffect( () => {
+        socket.current.on("connect_failed", () => {
+            alert("failed to connect")
+        })
+        socket.current.on("connect", () => {
+            console.log(socket.current) 
+          });
+    }, [])
 
     useEffect( () => {
         if(username === null) {
@@ -120,36 +122,41 @@ export default function Room() {
             socket.current.emit("join_room", data)
         }
     }, [history, room, username])
-
-    useEffect(() => {
-        socket.current.emit("total_user", room)
-    })
     
     useEffect( () => {
+        socket.current.emit("total_user", room)
         socket.current.emit("get_saved_url", room)
-    }, [socket,room])
+    }, [notif, room])
+    
+    // useEffect( () => {
+    //     socket.current.emit("get_saved_url", room)
+    // }, [socket, room])
 
-    useEffect( () => {
+
+    useEffect( () => {      
+        const setSavedUrl = () => {
+            socket.current.on("receive_saved_url", (data) => {
+                if(data !== null) {
+                    if(data.playedBy !== null && data.room === room) {
+                        setVideo({
+                            playedBy: data.playedBy,
+                            title: data.title,
+                            channel: data.channel,
+                            url: data.url,
+                            uploadedAt: data.uploadedAt,
+                            direct: data.direct,
+                            length: data.length
+                        })
+                    }
+                }
+            })
+        }
         socket.current.on("get_total_user", (data) => {
+            setHost(data[0].username)
             if( data.length !== 1 ) setSavedUrl()
         })
-    }, [socket, room])
+    }, [socket, room, video])
 
-    const setSavedUrl = () => {
-        socket.current.on("receive_saved_url", (data) => {
-            if(data !== null) {
-                if(data.playedBy !== null && data.room === room) {
-                    setVideo({
-                        playedBy: data.playedBy,
-                        title: data.title,
-                        channel: data.channel,
-                        url: data.url,
-                        uploadedAt: data.uploadedAt
-                    })
-                }
-            }
-        })
-    }
 
     useEffect( () => {
         socket.current.on("user_joined", (data) => {
@@ -159,20 +166,7 @@ export default function Room() {
         socket.current.on("user_left", (data) => {
             setNotif(data.notif)
         })
-    })
-
-    const search = (e) => {
-        e.preventDefault()
-        setSearching(true)
-        axios.post('https://senhai-connect-server.herokuapp.com/search', { query: query })
-        .then( res => { 
-            // console.log(res.data)
-            setResult(res.data.result)
-            setSearching(false)
-            ref.current.scrollIntoView({ behavior: 'smooth' })
-        })
-        .catch( err => console.error(err))
-    }
+    }, [notif])
 
     const selectVideo = (i) => {
         socket.current.emit("play_video", {
@@ -183,9 +177,10 @@ export default function Room() {
             playedBy: username,
             channel: i.channel.name,
             uploadedAt: i.uploadedAt,
+            length: i.duration,
             ytVideo: true
         })
-         let pause = {
+        let pause = {
             room: room,
             playerState: false
         }
@@ -195,7 +190,9 @@ export default function Room() {
             channel: i.channel.name,
             url: i.url,
             uploadedAt: i.uploadedAt,
-            playedBy: username
+            playedBy: username,
+            length: i.duration,
+            direct: false
         })
         window.scrollTo({ top: 0, behavior: 'smooth' })
     }
@@ -212,29 +209,18 @@ export default function Room() {
     return (
         <div>
         <Container maxWidth="lg" className={classes.root} >
-            <form onSubmit={search} className={classes.appBar} >
+            <div className={classes.appBar} >
                 <div onClick={leaveRoom} >
                     <ArrowBackIcon className={classes.backIcon} />
                 </div>
-                <TextField 
-                    color="primary"
-                    placeholder="Search youtube title..."
-                    variant="outlined"
-                    fullWidth
-                    size="small"
-                    inputProps={{ style: { backgroundColor: '#121212'} }}
-                    value={query}
-                    onChange={ (e) => setQuery(e.target.value) }
-                    autoComplete="false"
-                />
-                <IconButton type="submit" className={classes.searchBtn} disableFocusRipple >
-                    {searching ? <CircularProgress size={22} color="inherit" /> : <SearchIcon />}
-                </IconButton>
-            </form>
+
+                <SearchBar setResult={setResult} searching={searching} setSearching={setSearching} />
+            </div>
 
             <div className={classes.videoWrapper} >
                 <div className={classes.videoContainer} >
-                    <VideoPlayer socket={socket} room={room} videoProps={video} />
+                    {/* {player} */}
+                    <VideoPlayer socket={socket} room={room} videoProps={video} host={host} />
                 </div>
 
                 <div className={classes.roomContainer} >
@@ -243,7 +229,7 @@ export default function Room() {
 
             </div>
 
-            <div ref={ref} >
+            <Element id="search" ref={ref} >
                { searching ?
                 <div>
                    <Typography>Searching...</Typography>
@@ -266,6 +252,7 @@ export default function Room() {
                                         <Media.Body>
                                             <Typography variant="subtitle1" >{i.title}</Typography>
                                             <Typography className={classes.channelName} variant="subtitle2" >{i.channel.name}</Typography>
+                                            <Typography className={classes.channelName} variant="subtitle2">{i.uploadedAt}</Typography>
                                         </Media.Body>
                                     </Media>
                                 </div>
@@ -274,7 +261,7 @@ export default function Room() {
                     ) )}
                 </Row>
                 }
-            </div>
+            </Element>
         </Container>
 
         <SnackBar notif={notif} />

@@ -27,10 +27,11 @@ const styles = makeStyles( (theme) => ({
     }
 }))
 
-export const User = ({ socket, room, notif }) => {
+export const User = React.memo( ({ socket, room, notif }) => {
     const classes = styles()
     const [ users, setUsers ] = useState([])
     const [ load, setLoad ] = useState(true)
+    const username = localStorage.getItem("username")
 
     useEffect( () => {
         socket.current.on("get_total_user", (data) => {
@@ -70,10 +71,10 @@ export const User = ({ socket, room, notif }) => {
                 
                 <div>
                     {users.map( (i,index) => (
-                        <Typography key={index} >{i.username}</Typography>
+                        <Typography key={index} >{i.username} { username === i.username && <span>(you)</span>} </Typography>
                     ))}
                 </div>
             </div>
         </div>
     )
-}
+})

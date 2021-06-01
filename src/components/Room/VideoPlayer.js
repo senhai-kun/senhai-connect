@@ -1,11 +1,17 @@
 import React, { useEffect, useState, useRef } from 'react'
 import ReactPlayer from 'react-player'
 import { Button, Divider, Hidden, makeStyles, TextField, Typography } from '@material-ui/core'
+import ProgressBar from './ProgressBar'
+import { Slider, Direction, FormattedTime } from 'react-player-controls'
+import screenfull from 'screenfull'
+import { User } from './User'
 import FiberManualRecordIcon from '@material-ui/icons/FiberManualRecord';
 import PlayArrowIcon from '@material-ui/icons/PlayArrow';
 import PauseIcon from '@material-ui/icons/Pause';
 import Collapse from '@material-ui/core/Collapse';
-import { User } from './User'
+import HomeIcon from '@material-ui/icons/Home';
+import FullscreenIcon from '@material-ui/icons/Fullscreen';
+import FullscreenExitIcon from '@material-ui/icons/FullscreenExit';
 
 const styles = makeStyles( (theme) => ({
     player: {
@@ -28,13 +34,22 @@ const styles = makeStyles( (theme) => ({
         marginTop: theme.spacing(1),
         marginBottom: theme.spacing(2),
     },
-    playBtn: {
-        marginRight: theme.spacing(2),
-        backgroundColor: '#A93226',
+    playerControlBtn: {
+        // marginRight: theme.spacing(2),
+        backgroundColor: 'transparent',
         color: 'white',
         '&:hover': {
-            backgroundColor: '#A93226',
+            backgroundColor: 'transparent',
         },
+        padding: 0,
+        paddingTop: 5,
+        paddingBottom: 5,
+        paddingRight: 10,
+        paddingLeft: 10,
+        minWidth: 30
+    },
+    fullscreenBtn: {
+
     },
     roomBtn: {
         marginLeft: theme.spacing(2),
@@ -45,6 +60,14 @@ const styles = makeStyles( (theme) => ({
         },
         [theme.breakpoints.up('md')]: {
             display: 'none'
+        },
+    },
+    syncBtn: {
+        backgroundColor: '#2E4053',
+        marginLeft: theme.spacing(2),
+        color: 'white',
+        '&:hover': {
+            color: '#283747',
         },
     },
     videoDetails: {
@@ -58,32 +81,34 @@ const styles = makeStyles( (theme) => ({
     }
 }))
 
-export const VideoPlayer = ({ socket, room, videoProps }) => {
+const VideoPlayer = React.memo( ({ socket, room, videoProps, host }) => {
     const classes = styles()
     const videoRef = useRef()
     const username = localStorage.getItem("username")
-    const [ users, setUsers ] = useState([])
 
-    useEffect( () => {
-        socket.current.on("get_total_user", (data) => {
-            setUsers(data)
-        })
-
-    }, [socket, room])
-
+    const [ duration, setDuration ] = useState(videoProps.length)
+    const [ progress, setProgress ] = useState(0)
+    const [ loaded, setLoaded ] = useState(0)
     const [ video, setVideo ] = useState(videoProps)
+    const[ fullscreen, setFullscreen ] = useState(false)
+
+    // directtly change video data
     useEffect( () => {
         setVideo(videoProps)
         socket.current.on("url", (data) => {
+            setDuration(data.length)
+            // console.log("server duration", data.length)
             setVideo({
                 title: data.title,
                 channel: data.channel,
                 url: data.url,
                 uploadedAt: data.uploadedAt,
-                playedBy: data.playedBy
+                playedBy: data.playedBy,
+                direct: data.direct,
+                length: data.length
             })
         })
-    }, [videoProps,socket])
+    }, [socket, videoProps])
 
     const [ playing, setPlaying ] = useState(false)
     const [ directLink, setDirectLink ] = useState('')
@@ -96,9 +121,10 @@ export const VideoPlayer = ({ socket, room, videoProps }) => {
         socket.current.on("receive_player_state", (data) => {
             setPlaying(data)
         })
-    }, [socket])
+    }, [playing, videoProps])
 
     const onPlay = () => {
+        // console.log("play")
         setPlaying(true)
         let play = {
             room: room,
@@ -107,14 +133,7 @@ export const VideoPlayer = ({ socket, room, videoProps }) => {
         socket.current.emit("player_state",play)
     }
     const onPause = () => {
-        let currentTime = videoRef.current.getCurrentTime()
-        let seeking = {
-            room: room,
-            seek: Math.floor(currentTime),
-            seekBy: username
-        }
-        socket.current.emit("seek", seeking )
-
+        // console.log("pause")
         let pause = {
             room: room,
             playerState: false
@@ -122,21 +141,33 @@ export const VideoPlayer = ({ socket, room, videoProps }) => {
         socket.current.emit("player_state",pause)
         setPlaying(false)
     }
+    
+    useEffect( () => {
+        // console.log(videoRef.current.getCurrentTime())
+        let seeking = {
+            room: room,
+            seek: videoRef.current.getCurrentTime(),
+            seekBy: username
+        }
+        if(!playing) {
+            host === username && socket.current.emit("seek", seeking )
+        }
+
+    }, [playing])
 
     useEffect( () => {
         let currentTime = videoRef.current.getCurrentTime()
         socket.current.on("receive_seek_time", (data) => {
-          if(data.seek !== Math.floor(currentTime)) {
-            setSeekBy(data.seekBy)
-            setSeeking(true)
-            if( videoProps.url !== '' ) {
-                // if(username !== )
-                videoRef.current.seekTo(data.seek)
-                setSeeking(false)
-            }
-          }
+            // if( host !== username ) {
+                if(data.seek !== currentTime ) {
+                    setSeekBy(data.seekBy)
+                    setSeeking(true)
+                    videoRef.current !== null && videoRef.current.seekTo(data.seek)
+                    setSeeking(false)
+                }
+            // }
         })
-    }, [playing, videoProps.url, socket])
+    }, [playing, videoProps.url])
 
     const onEnded = () => {
         setPlaying(false)
@@ -144,13 +175,22 @@ export const VideoPlayer = ({ socket, room, videoProps }) => {
 
     const direct = (e) => {
         e.preventDefault()
+        socket.current.emit("play_video", {
+            room: room,
+            url: directLink,
+            title: 'Title unavailable',
+            direct: true,
+            playedBy: username,
+            channel: '',
+            uploadedAt: ''
+        })
         setVideo({
             title: 'Title unavailable',
             channel: '',
             url: directLink,
             uploadedAt: '',
+            directLink: true
         })
-        console.log('asds')
     }
 
     return (
@@ -159,40 +199,138 @@ export const VideoPlayer = ({ socket, room, videoProps }) => {
                 <Typography>Played by: <span style={{ color: 'wheat' }} > {video.playedBy}</span></Typography>
                 { seeking && <Typography>Seek by: <span style={{ color: 'wheat' }} > {seekBy}</span></Typography>}
             </div>
-            <div className={classes.player} >
-                <ReactPlayer 
+            <div id="video" className={classes.player} style={{position: 'relative'}} >
+                <ReactPlayer   
                     ref={videoRef}
                     url={video.url}
                     width="100%"
                     height="100%"
-                    controls
+                    // controls
                     playing={playing}
-                    onPlay={onPlay}
-                    onSeek={() => {
-                        setPlaying(false)
+                    onStart={ (e) => {
+                        // console.log("start", videoRef.current.getDuration())
+                        setLoaded(0)
                     }}
-                    // onProgress={ (e) => {
-                    //     console.log("progress", e)
-                    // } }
+                    onReady={ (e) => {
+                        setProgress(0)
+                        // console.log("ready", e.getInternalPlayer().getDuration())
+                        // setDuration(e.getDuration())
+                    }}
+                    onPlay={onPlay}
                     onPause={onPause}
+                    onSeek={ (e) => {   
+                        setPlaying(false)
+                        console.log("seek", e)
+                    }}
+                    onProgress={ (e) => {
+                        // console.log(e)
+                        setLoaded(e.loaded)
+                        setProgress(e.played)
+                    }}
+                    onBuffer={ () => {
+                        console.log("buffer")
+                    }}
                     onEnded={onEnded}
                 />
-            </div>
+                <div style={{
+                    display: 'flex',
+                    width: '100%',
+                    alignContent: 'center',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    position: 'absolute',
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.5)'
+                }} >
+                    <Button 
+                        className={classes.playerControlBtn} 
+                        color="primary" 
+                        variant="contained"
+                        size="small" 
+                        onClick={ playing ? onPause : onPlay }
+                        disableElevation
+                    >
+                        { playing ? <PauseIcon /> : <PlayArrowIcon />}
+                    </Button>
+                    <FormattedTime style={{ marginRight: 10}} numSeconds={ progress * (video.length / 1000)} />
+                    <Slider
+                        style={{ width: '90%' }}
+                        direction={Direction.HORIZONTAL}
+                        value={progress}
+                        // onIntent={intent => console.log(`hovered at ${intent}`)}
+                        // onIntentStart={intent => console.log(`entered with mouse at ${intent}`)}
+                        // onIntentEnd={() => console.log('left with mouse')}
+                        onChange={newValue => {
+                            const time = Number(newValue) * (video.length / 1000)
+                            let seeking = {
+                                room: room,
+                                seek: time,
+                                seekBy: username
+                            }
+                            socket.current.emit("seek", seeking )
+                            console.log("time", time)
+                            console.log(duration)
+                            videoRef.current.seekTo(time)
+                            setProgress(newValue)
+                        }}
+                        onChangeStart={startValue => console.log(`started dragging at ${startValue}`)}
+                        onChangeEnd={endValue => {
+                            const time = Number(endValue) * (video.length / 1000)
+                            let seeking = {
+                                room: room,
+                                seek: time,
+                                seekBy: username
+                            }
+                            socket.current.emit("seek", seeking )
+                            videoRef.current !== null && videoRef.current.seekTo(time)
+                            setProgress(endValue)
+                        } }
+                    >
+                        <ProgressBar isEnabled value={progress} buffer={loaded} direction={Direction.HORIZONTAL}  />
 
+                    </Slider>
+
+                    <FormattedTime style={{ marginLeft: 10, marginRight: 5}} numSeconds={video.length / 1000} />
+    
+                    <Button 
+                        className={classes.playerControlBtn} 
+                        color="primary" 
+                        variant="contained"
+                        size="small" 
+                        onClick={ () => {
+                            setFullscreen(!fullscreen)
+                            const el = document.getElementById("video")
+                            screenfull.toggle(el)
+                            window.screen.orientation.lock("landscape")
+                        }}
+                        disableElevation
+                    >
+                        { fullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
+                    </Button>  
+                </div>     
+            </div>
+                        
+       
+            
             <div className={classes.titleContainer} >
                 <Typography style={{fontWeight: 'bold'}} >{video.title}</Typography>
 
                 { video.title !== "" && 
                 <div className={classes.videoDetails} >
                     <Typography className={classes.channel} variant="inherit" >{video.channel}</Typography>
-                    <FiberManualRecordIcon fontSize="inherit" className={classes.channel} />
-                    <Typography variant="inherit" >Uploaded {video.uploadedAt}</Typography>
+                    { !video.direct && 
+                        <>
+                            <FiberManualRecordIcon fontSize="inherit" className={classes.channel} />
+                            <Typography variant="inherit" >Uploaded {video.uploadedAt}</Typography>
+                        </>
+                    }
+
                 </div>
                 }
             </div>
 
             <div className={classes.actionContainer} >
-                <Button 
+                {/* <Button 
                     className={classes.playBtn} 
                     color="primary" 
                     variant="contained"
@@ -200,7 +338,7 @@ export const VideoPlayer = ({ socket, room, videoProps }) => {
                     onClick={ playing ? onPause : onPlay }
                 >
                     { playing ? <PauseIcon /> : <PlayArrowIcon />}
-                </Button>
+                </Button> */}
                 
                 <Button 
                     variant="contained" 
@@ -223,9 +361,13 @@ export const VideoPlayer = ({ socket, room, videoProps }) => {
                         openDirect && setOpenDirect(false)
                         setOpenRoom(!openRoom)
                     }}
+                    startIcon={<HomeIcon />}
                 >
                     Room
                 </Button>
+                
+                {/* { host !== username && <Sync />} */}
+
             </div>
 
             <Collapse in={openDirect} >
@@ -252,9 +394,9 @@ export const VideoPlayer = ({ socket, room, videoProps }) => {
             
             <Hidden mdUp >
                 <Collapse in={openRoom} >
-                    <form className={classes.actionContainer} style={{ marginBottom: 10 }} >
+                    <div className={classes.actionContainer} style={{ marginBottom: 10 }} >
                         <User socket={socket} room={room} />
-                    </form>
+                    </div>
                 </Collapse>
             </Hidden>
             <Divider 
@@ -267,4 +409,6 @@ export const VideoPlayer = ({ socket, room, videoProps }) => {
             />
         </div>
     )
-}
+})
+
+export default VideoPlayer

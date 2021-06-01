@@ -1,7 +1,5 @@
 import React, { useEffect } from 'react'
-import { SnackbarProvider, useSnackbar } from 'notistack';
-import Slide from '@material-ui/core/Slide';
-import { Button, Typography } from '@material-ui/core';
+import { useSnackbar } from 'notistack';
 
 const SnackBar = ({ notif }) => {
     const { enqueueSnackbar } = useSnackbar();
@@ -16,7 +14,7 @@ const SnackBar = ({ notif }) => {
                 autoHideDuration: 3000,
                 resumeHideDuration: 1500,
                 persist: false,
-                variant: "success"
+                variant: "info"
                 
             });
         }

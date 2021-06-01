@@ -96,6 +96,7 @@ const JoinRoomContainer = ({ setChangeName }) => {
                     variant="outlined" 
                     className={classes.btn}
                     size="large"
+                    disabled
                 >
                     Create Room
                 </Button>
