@@ -1,14 +1,26 @@
 import React from 'react'
 import { Direction, Slider } from 'react-player-controls'
+import { makeStyles } from '@material-ui/core'
 
 const WHITE_SMOKE = 'grey'
 const GRAY = '#878c88'
 const GREEN = '#72d687'
 const YT = 'red'
 
+const styles = makeStyles( (theme) => ({
+  sliderBar: {
+    backgroundColor: 'green',
+    height: 30,
+    '&:hover:': {
+      background: 'blue'
+    }
+  }
+}))
+
 // seeker
-const SliderBar = ({ value }) => (
+export const SliderBar = ({ value }) => (
   <div
+    className={styles().sliderBar}
     style={{
       position: 'absolute',
       background: YT,
@@ -17,17 +29,15 @@ const SliderBar = ({ value }) => (
       bottom: 0,
       left: 0,
       width: `${value * 100}%`,
-      height: 3,
-      '&:hover': {
-        height: 5
-      },
-      zIndex: 1
+      height: 5,
+      zIndex: 1,
+      cursor: 'pointer'
     }}
   />
 )
 
 // buffer
-const Buffer = ({ value }) => (
+export const Buffer = ({ value }) => (
   <div
     style={{
       position: 'absolute',
@@ -37,7 +47,7 @@ const Buffer = ({ value }) => (
       bottom: 0,
       left: 0,
       width: `${value * 100}%`,
-      height: 3,
+      height: 5,
       '&:hover': {
         height: 5,
       },
@@ -48,7 +58,7 @@ const Buffer = ({ value }) => (
 
 
 // A handle to indicate the current value
-const SliderHandle = ({ value }) => (
+export const SliderHandle = ({ value }) => (
   <div
     style={{
       position: 'absolute',
@@ -57,14 +67,13 @@ const SliderHandle = ({ value }) => (
       background: YT,
       borderRadius: '100%',
       transform: 'scale(0.8)',
-      transition: 'transform 0.2s',
+      transition: 'all 0.2s',
       '&:hover': {
         transform: 'scale(1.5)',
-        width: 20
       },
       top: 0,
       left: `${value * 100}%`,
-      marginTop: -6,
+      marginTop: -5,
       marginLeft: -8,
       zIndex: 2
     }}
@@ -72,19 +81,22 @@ const SliderHandle = ({ value }) => (
 )
 
 // A composite progress bar component
-const ProgressBar = ({ isEnabled, direction, value, buffer, ...props }) => (
+const ProgressBar = ({ isEnabled, direction, value, buffer, onChange, onChangeStart, onChangeEnd, ...props }) => (
   <Slider
     direction={direction}
-    // onChange={/* store value somehow */}
+    onChange={onChange}
+    onChangeStart={onChangeStart}
+    onChangeEnd={onChangeEnd}
     style={{
       width: '100%',
       height: 3,
       borderRadius: 4,
       background: WHITE_SMOKE,
-      transition: direction === Direction.HORIZONTAL ? 'width 0.1s' : 'height 0.1s',
+      // transition: direction === Direction.HORIZONTAL ? 'width 0.1s' : 'height 0.1s',
       cursor: isEnabled === true ? 'pointer' : 'default',
       '&:hover': {
-        transform: 'scale(1.9)'
+        transform: 'scale(2.9)',
+        margin: 20
       }
     }}
     {...props}
@@ -95,4 +107,4 @@ const ProgressBar = ({ isEnabled, direction, value, buffer, ...props }) => (
   </Slider>
 )
 
-export default ProgressBar
+// export default ProgressBarexport 

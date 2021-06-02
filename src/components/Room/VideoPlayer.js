@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react'
 import ReactPlayer from 'react-player'
 import { Button, Divider, Hidden, makeStyles, TextField, Typography } from '@material-ui/core'
-import ProgressBar from './ProgressBar'
+import { SliderHandle, SliderBar, Buffer } from './ProgressBar'
 import { Slider, Direction, FormattedTime } from 'react-player-controls'
 import screenfull from 'screenfull'
 import { User } from './User'
@@ -121,7 +121,7 @@ const VideoPlayer = React.memo( ({ socket, room, videoProps, host }) => {
         socket.current.on("receive_player_state", (data) => {
             setPlaying(data)
         })
-    }, [playing, videoProps])
+    }, [playing, video])
 
     const onPlay = () => {
         // console.log("play")
@@ -167,7 +167,7 @@ const VideoPlayer = React.memo( ({ socket, room, videoProps, host }) => {
                 }
             // }
         })
-    }, [playing, videoProps.url])
+    }, [playing, video.url])
 
     const onEnded = () => {
         setPlaying(false)
@@ -214,7 +214,7 @@ const VideoPlayer = React.memo( ({ socket, room, videoProps, host }) => {
                     onReady={ (e) => {
                         setProgress(0)
                         // console.log("ready", e.getInternalPlayer().getDuration())
-                        // setDuration(e.getDuration())
+                        setDuration(e.getDuration())
                     }}
                     onPlay={onPlay}
                     onPause={onPause}
@@ -254,7 +254,17 @@ const VideoPlayer = React.memo( ({ socket, room, videoProps, host }) => {
                     </Button>
                     <FormattedTime style={{ marginRight: 10}} numSeconds={ progress * (video.length / 1000)} />
                     <Slider
-                        style={{ width: '90%' }}
+                        style={{
+                            width: '100%',
+                            height: 5,
+                            borderRadius: 4,
+                            background: "grey",
+                            // transition: direction === Direction.HORIZONTAL ? 'width 0.1s' : 'height 0.1s',
+                            cursor: 'pointer',
+                            '&:hover': {
+                              transform: 'scale(2.9)'
+                            }
+                        }}
                         direction={Direction.HORIZONTAL}
                         value={progress}
                         // onIntent={intent => console.log(`hovered at ${intent}`)}
@@ -286,8 +296,10 @@ const VideoPlayer = React.memo( ({ socket, room, videoProps, host }) => {
                             setProgress(endValue)
                         } }
                     >
-                        <ProgressBar isEnabled value={progress} buffer={loaded} direction={Direction.HORIZONTAL}  />
-
+                        {/* <ProgressBar isEnabled value={progress} buffer={loaded} direction={Direction.HORIZONTAL}  /> */}
+                        <SliderHandle value={progress}  />
+                        <SliderBar value={progress} style={{ background: 'red' }} />
+                        <Buffer value={loaded} />
                     </Slider>
 
                     <FormattedTime style={{ marginLeft: 10, marginRight: 5}} numSeconds={video.length / 1000} />
@@ -399,14 +411,7 @@ const VideoPlayer = React.memo( ({ socket, room, videoProps, host }) => {
                     </div>
                 </Collapse>
             </Hidden>
-            <Divider 
-                style={{
-                    backgroundColor: '#303030',
-                    marginTop: '5px',
-                    marginBottom: '5px'
-                }} 
-                light={true} 
-            />
+            
         </div>
     )
 })

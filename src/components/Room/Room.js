@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useHistory, useLocation } from 'react-router-dom'
 import io from 'socket.io-client'
 import { urlSocket } from './api'
-import { Container, duration, makeStyles, Typography  } from '@material-ui/core'
+import { Container, Divider, duration, makeStyles, Typography  } from '@material-ui/core'
 import { Row, Col, Media } from 'react-bootstrap'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import VideoPlayer from './VideoPlayer'
@@ -126,7 +126,7 @@ export default function Room() {
     useEffect( () => {
         socket.current.emit("total_user", room)
         socket.current.emit("get_saved_url", room)
-    }, [notif, room])
+    }, [socket, notif, room])
     
     // useEffect( () => {
     //     socket.current.emit("get_saved_url", room)
@@ -134,7 +134,12 @@ export default function Room() {
 
 
     useEffect( () => {      
-        const setSavedUrl = () => {
+        // let data;
+        socket.current.on("get_total_user", (data) => {
+            setHost(data[0].username)
+            // data = data
+        })
+        // if( data.length !== 1 ) {
             socket.current.on("receive_saved_url", (data) => {
                 if(data !== null) {
                     if(data.playedBy !== null && data.room === room) {
@@ -150,12 +155,9 @@ export default function Room() {
                     }
                 }
             })
-        }
-        socket.current.on("get_total_user", (data) => {
-            setHost(data[0].username)
-            if( data.length !== 1 ) setSavedUrl()
-        })
-    }, [socket, room, video])
+        // }
+        
+    }, [socket, room, video, notif])
 
 
     useEffect( () => {
@@ -208,63 +210,72 @@ export default function Room() {
 
     return (
         <div>
-        <Container maxWidth="lg" className={classes.root} >
-            <div className={classes.appBar} >
-                <div onClick={leaveRoom} >
-                    <ArrowBackIcon className={classes.backIcon} />
+            <Container maxWidth="lg" className={classes.root} >
+                <div className={classes.appBar} >
+                    <div onClick={leaveRoom} >
+                        <ArrowBackIcon className={classes.backIcon} />
+                    </div>
+
+                    <SearchBar setResult={setResult} searching={searching} setSearching={setSearching} />
                 </div>
 
-                <SearchBar setResult={setResult} searching={searching} setSearching={setSearching} />
-            </div>
+                <div className={classes.videoWrapper} >
+                    <div className={classes.videoContainer} >
+                        {/* {player} */}
+                        <VideoPlayer socket={socket} room={room} videoProps={video} host={host} />
+                    </div>
 
-            <div className={classes.videoWrapper} >
-                <div className={classes.videoContainer} >
-                    {/* {player} */}
-                    <VideoPlayer socket={socket} room={room} videoProps={video} host={host} />
+                    <div className={classes.roomContainer} >
+                        <User socket={socket} room={room} notif={notif} />
+                    </div>
+
                 </div>
 
-                <div className={classes.roomContainer} >
-                    <User socket={socket} room={room} notif={notif} />
-                </div>
+                <Divider 
+                    style={{
+                        backgroundColor: '#303030',
+                        marginTop: '5px',
+                        marginBottom: '5px'
+                    }} 
+                    light={true} 
+                />
 
-            </div>
-
-            <Element id="search" ref={ref} >
-               { searching ?
-                <div>
-                   <Typography>Searching...</Typography>
-                </div>
-                   :
-                <Row xs={1} sm={3} md={4} lg={5} style={{ margin: 2 }} >
-                    {result.map( (i,index) => (
-                        <div key={index} >
-                            <Col className={classes.card} >
-                                <div 
-                                    style={{ padding: 1}} 
-                                    onClick={() => selectVideo(i)}
-                                >
-                                    <div style={{ position: 'relative' }} >
-                                        <img src={i.thumbnail.url} alt={""} className={classes.img} />
-                                        <Typography variant="inherit" className={classes.duration} >{i.duration_formatted}</Typography>
+                <Element id="search" ref={ref} >
+                { searching ?
+                    <div>
+                    <Typography>Searching...</Typography>
+                    </div>
+                    :
+                    <Row xs={1} sm={3} md={4} lg={5} style={{ margin: 2 }} >
+                        {result.map( (i,index) => (
+                            <div key={index} >
+                                <Col className={classes.card} >
+                                    <div 
+                                        style={{ padding: 1}} 
+                                        onClick={() => selectVideo(i)}
+                                    >
+                                        <div style={{ position: 'relative' }} >
+                                            <img src={i.thumbnail.url} alt={""} className={classes.img} />
+                                            <Typography variant="inherit" className={classes.duration} >{i.duration_formatted}</Typography>
+                                        </div>
+                                        <Media style={{ marginTop: 10 }} >
+                                            <img className={classes.iconChannel} src={i.channel.icon} alt="" /> 
+                                            <Media.Body>
+                                                <Typography variant="subtitle1" >{i.title}</Typography>
+                                                <Typography className={classes.channelName} variant="subtitle2" >{i.channel.name}</Typography>
+                                                <Typography className={classes.channelName} variant="subtitle2">{i.uploadedAt}</Typography>
+                                            </Media.Body>
+                                        </Media>
                                     </div>
-                                    <Media style={{ marginTop: 10 }} >
-                                        <img className={classes.iconChannel} src={i.channel.icon} alt="" /> 
-                                        <Media.Body>
-                                            <Typography variant="subtitle1" >{i.title}</Typography>
-                                            <Typography className={classes.channelName} variant="subtitle2" >{i.channel.name}</Typography>
-                                            <Typography className={classes.channelName} variant="subtitle2">{i.uploadedAt}</Typography>
-                                        </Media.Body>
-                                    </Media>
-                                </div>
-                            </Col>
-                        </div>
-                    ) )}
-                </Row>
-                }
-            </Element>
-        </Container>
+                                </Col>
+                            </div>
+                        ) )}
+                    </Row>
+                    }
+                </Element>
+            </Container>
 
-        <SnackBar notif={notif} />
+            <SnackBar notif={notif} />
 
         </div>
     )

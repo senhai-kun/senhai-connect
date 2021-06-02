@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import SearchIcon from '@material-ui/icons/Search';
-import { CircularProgress, IconButton, makeStyles, TextField } from '@material-ui/core'
+import { CircularProgress, Button, makeStyles, TextField } from '@material-ui/core'
 import axios from 'axios';
 import Scroll from 'react-scroll'
 
@@ -33,7 +33,7 @@ export const SearchBar = ({ setResult, searching, setSearching }) => {
         setSearching(true)
         axios.post('https://senhai-connect-server.herokuapp.com/search', { query: query })
         .then( res => { 
-            console.log(res.data)
+            // console.log(res.data)
             setResult(res.data.result)
             setSearching(false)
             scroll.scrollTo("search", {
@@ -42,7 +42,6 @@ export const SearchBar = ({ setResult, searching, setSearching }) => {
                 smooth: true,
                 // containerId: 'search'
             })
-            // refer.current.scrollIntoView({ behavior: 'smooth' })
         })
         .catch( err => console.error(err))
     }
@@ -60,9 +59,9 @@ export const SearchBar = ({ setResult, searching, setSearching }) => {
                 onChange={ (e) => setQuery(e.target.value) }
                 autoComplete="false"
             />
-            <IconButton type="submit" className={classes.searchBtn} disableFocusRipple >
+            <Button type="submit" className={classes.searchBtn} disableFocusRipple >
                 {searching ? <CircularProgress size={22} color="inherit" /> : <SearchIcon />}
-            </IconButton>
+            </Button>
         </form>
     )
 }

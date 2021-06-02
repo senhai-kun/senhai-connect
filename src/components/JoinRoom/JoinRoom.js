@@ -38,7 +38,7 @@ export default function JoinRoom() {
                 <Container maxWidth="sm" >
                     <Box className={classes.titleContainer} >
                         <Typography variant='h4' className={classes.title} >Senhai Connect</Typography>
-                        <Typography variant='body2' >Watch videos together</Typography>
+                        <Typography variant='body2' >Connect your videos to your love ones.</Typography>
                     </Box>
                     
                     <Paper className={classes.paper} >
