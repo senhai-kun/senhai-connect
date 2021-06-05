@@ -30,13 +30,11 @@ const styles = makeStyles( (theme) => ({
 export const User = React.memo( ({ socket, room, notif }) => {
     const classes = styles()
     const [ users, setUsers ] = useState([])
-    const [ load, setLoad ] = useState(true)
     const username = localStorage.getItem("username")
 
     useEffect( () => {
         socket.current.on("get_total_user", (data) => {
             setUsers(data)
-            setLoad(false)
         })
 
     }, [socket, room, notif])
@@ -55,7 +53,7 @@ export const User = React.memo( ({ socket, room, notif }) => {
             </Paper>
             
             <div className={classes.users} >
-                <Typography>Host: <span style={{color: 'wheat'}} > {load ? '' : users[0].username}</span></Typography>
+                <Typography>Host: <span style={{color: 'wheat'}} > {users.length === 0 ? '' : users[0].username}</span></Typography>
 
                 <Divider 
                     style={{
@@ -70,7 +68,7 @@ export const User = React.memo( ({ socket, room, notif }) => {
                 <Typography>Active Users: </Typography>
                 
                 <div>
-                    {users.map( (i,index) => (
+                    {users.length !== 0 && users.map( (i,index) => (
                         <Typography key={index} >{i.username} { username === i.username && <span>(you)</span>} </Typography>
                     ))}
                 </div>

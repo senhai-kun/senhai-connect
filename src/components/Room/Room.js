@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useHistory, useLocation } from 'react-router-dom'
 import io from 'socket.io-client'
 import { urlSocket } from './api'
-import { Container, Divider, duration, makeStyles, Typography  } from '@material-ui/core'
+import { Container, Divider, makeStyles, Typography  } from '@material-ui/core'
 import { Row, Col, Media } from 'react-bootstrap'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import VideoPlayer from './VideoPlayer'
@@ -102,14 +102,14 @@ export default function Room() {
         direct: false
     })
 
-    useEffect( () => {
-        socket.current.on("connect_failed", () => {
-            alert("failed to connect")
-        })
-        socket.current.on("connect", () => {
-            console.log(socket.current) 
-          });
-    }, [])
+    // useEffect( () => {
+    //     socket.current.on("connect_failed", () => {
+    //         alert("failed to connect")
+    //     })
+    //     socket.current.on("connect", () => {
+    //         console.log(socket.current) 
+    //       });
+    // }, [])
 
     useEffect( () => {
         if(username === null) {
@@ -127,16 +127,10 @@ export default function Room() {
         socket.current.emit("total_user", room)
         socket.current.emit("get_saved_url", room)
     }, [socket, notif, room])
-    
-    // useEffect( () => {
-    //     socket.current.emit("get_saved_url", room)
-    // }, [socket, room])
 
-
-    useEffect( () => {      
-        // let data;
+    useEffect( () => {    
         socket.current.on("get_total_user", (data) => {
-            setHost(data[0].username)
+            data.length !== 0 && setHost(data[0].username)
             // data = data
         })
         // if( data.length !== 1 ) {
@@ -205,11 +199,14 @@ export default function Room() {
             username: username
         }
         socket.current.emit('leave_room', leave_user)
+        socket.current.on('disconnect', (reason) => {
+            console.log(reason)
+        })
         history.push('/')
     }
 
     return (
-        <div>
+        <div >
             <Container maxWidth="lg" className={classes.root} >
                 <div className={classes.appBar} >
                     <div onClick={leaveRoom} >

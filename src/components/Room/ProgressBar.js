@@ -9,74 +9,61 @@ const YT = 'red'
 
 const styles = makeStyles( (theme) => ({
   sliderBar: {
-    backgroundColor: 'green',
-    height: 30,
-    '&:hover:': {
-      background: 'blue'
+    position: 'absolute',
+    background: YT,
+    borderRadius: 4,
+    top: 0,
+    bottom: 0,
+    left: 0,
+    height: 5,
+    zIndex: 1,
+    cursor: 'pointer',
+    '&:hover': {
+      background: 'green'
     }
+  },
+  buffer: {
+    position: 'absolute',
+    background: '#B9B7B7',
+    borderRadius: 4,
+    top: 0,
+    bottom: 0,
+    left: 0,
+    height: 5,
+  },
+  sliderHandle: {
+    position: 'absolute',
+    width: 16,
+    height: 16,
+    background: YT,
+    borderRadius: '100%',
+    transform: 'scale(0.8)',
+    transition: 'all 0.2s',
+    '&:hover': {
+      transform: 'scale(1.1)',
+    },
+    top: 0,
+    marginTop: -5,
+    marginLeft: -8,
+    zIndex: 2
   }
 }))
 
 // seeker
 export const SliderBar = ({ value }) => (
-  <div
-    className={styles().sliderBar}
-    style={{
-      position: 'absolute',
-      background: YT,
-      borderRadius: 4,
-      top: 0,
-      bottom: 0,
-      left: 0,
-      width: `${value * 100}%`,
-      height: 5,
-      zIndex: 1,
-      cursor: 'pointer'
-    }}
-  />
+  <div className={styles().sliderBar} style={{ width: `${value * 100}%` }} />
 )
 
 // buffer
 export const Buffer = ({ value }) => (
-  <div
-    style={{
-      position: 'absolute',
-      background: '#eee',
-      borderRadius: 4,
-      top: 0,
-      bottom: 0,
-      left: 0,
-      width: `${value * 100}%`,
-      height: 5,
-      '&:hover': {
-        height: 5,
-      },
-      }}
-  />
+    <div className={styles().buffer} style={{ width: `${value * 100}%` }} />
 )
 
 
 
 // A handle to indicate the current value
 export const SliderHandle = ({ value }) => (
-  <div
-    style={{
-      position: 'absolute',
-      width: 16,
-      height: 16,
-      background: YT,
-      borderRadius: '100%',
-      transform: 'scale(0.8)',
-      transition: 'all 0.2s',
-      '&:hover': {
-        transform: 'scale(1.5)',
-      },
-      top: 0,
-      left: `${value * 100}%`,
-      marginTop: -5,
-      marginLeft: -8,
-      zIndex: 2
-    }}
+  <div className={styles().sliderHandle} style={{ left: `${value * 100}%` }}
   />
 )
 

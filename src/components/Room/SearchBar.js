@@ -1,8 +1,10 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import SearchIcon from '@material-ui/icons/Search';
 import { CircularProgress, Button, makeStyles, TextField } from '@material-ui/core'
 import axios from 'axios';
-import Scroll from 'react-scroll'
+import { scroller } from 'react-scroll'
+import Autocomplete from '@material-ui/lab/Autocomplete';
+import { urlSocket } from './api'
 
 const styles = makeStyles( (theme) => ({
     root: {
@@ -25,18 +27,33 @@ const styles = makeStyles( (theme) => ({
 export const SearchBar = ({ setResult, searching, setSearching }) => {
     const classes = styles();
     const [ query, setQuery ] = useState('')
+    const [ suggest, setSuggest ] = useState('')
+    const [ open, setOpen ] = useState(false)
 
-    const scroll = Scroll.scroller
+    useEffect( () => {
+        axios.post(`${urlSocket}YTsuggest`, query)
+        .then(res => {
+            // console.log(res.data)
+            setSuggest(res.data)
+            setOpen(true)
+        })
+    }, [query])
+
+    useEffect( () => {
+        searching && setOpen(false)
+    }, [searching])
 
     const search = (e) => {
         e.preventDefault()
+        setOpen(false)
         setSearching(true)
-        axios.post('https://senhai-connect-server.herokuapp.com/search', { query: query })
+        axios.post(`${urlSocket}search`, { query: query })
         .then( res => { 
             // console.log(res.data)
             setResult(res.data.result)
+            setOpen(false)
             setSearching(false)
-            scroll.scrollTo("search", {
+            scroller.scrollTo("search", {
                 duration: 100,
                 delay: 0,
                 smooth: true,
@@ -48,17 +65,33 @@ export const SearchBar = ({ setResult, searching, setSearching }) => {
 
     return (
         <form onSubmit={search} className={classes.root} >
-            <TextField 
-                color="primary"
-                placeholder="Search youtube title..."
-                variant="outlined"
+            <Autocomplete 
+                freeSolo
                 fullWidth
-                size="small"
-                inputProps={{ style: { backgroundColor: '#121212'} }}
+                options={suggest}
                 value={query}
-                onChange={ (e) => setQuery(e.target.value) }
-                autoComplete="false"
+                onChange={ (e) => setQuery(e.target.value), search }
+                onClose={() => setOpen(false)}
+                // autoHighlight
+                open={open}
+                // autoSelect={true}
+                disableClearable
+                renderInput={ (params) => (
+                    <TextField 
+                        {...params}
+                        color="primary"
+                        placeholder="Search youtube title..."
+                        variant="outlined"
+                        fullWidth
+                        size="small"
+                        // inputProps={{ style: { backgroundColor: '#121212'} }}
+                        InputProps={{ ...params.InputProps, type: 'search', style: { backgroundColor: '#121212'} }}
+                        value={query}
+                        onChange={ (e) => setQuery(e.target.value) }
+                    />
+                )}
             />
+           
             <Button type="submit" className={classes.searchBtn} disableFocusRipple >
                 {searching ? <CircularProgress size={22} color="inherit" /> : <SearchIcon />}
             </Button>
