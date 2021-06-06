@@ -92,7 +92,8 @@ const styles = makeStyles( (theme) => ({
         background: 'rgba(0,0,0,0.5)',
         // background: 'linear-gradient(180deg, rgba(2,0,36,0) 0%, rgba(2,2,17,0.009138689655549759) 0%, rgba(0,0,0,1) 100%)',
         transition: 'all 0.2s',
-        opacity: 1
+        opacity: 1,
+        touchAction: 'none'
     },
     hide: {
         opacity: 0,
@@ -135,7 +136,7 @@ const VideoPlayer = React.memo( ({ socket, room, videoProps, host }) => {
                 length: data.length
             })
         })
-    }, [socket, videoProps])
+    }, [videoProps])
 
     const [ playing, setPlaying ] = useState(false)
     const [ directLink, setDirectLink ] = useState('')
@@ -229,26 +230,30 @@ const VideoPlayer = React.memo( ({ socket, room, videoProps, host }) => {
             directLink: true
         })
     }
-    const onMouseLeave = () => {
+    const onMouseLeave = (e) => {
+        e.preventDefault()
         playing ? setTimeout( () => {
                 setControls(false)
             }, 5000) : setControls(true)
-    
     }
-
+    const onMouseEnter = (e) => {
+        e.preventDefault()
+        setControls(true)
+    }
     return (
         <div >
             <div style={{ display: 'flex', justifyContent: 'space-between' }} >
                 <Typography>Played by: <span style={{ color: 'wheat' }} > {video.playedBy}</span></Typography>
                 { seeking && <Typography>Seek by: <span style={{ color: 'wheat' }} > {seekBy}</span></Typography>}
             </div>
-            <div id="video" className={classes.player} style={{position: 'relative'}} onMouseEnter={() => setControls(true) } onMouseLeave={onMouseLeave} >
+            <div id="video" className={classes.player} style={{position: 'relative'}} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} >
                 <ReactPlayer   
                     ref={videoRef}
                     config={{
                         youtube: {
                             playerVars: {
-                                rel: 0
+                                rel: 0,
+                                // origin: window.location.href
                             }
                         }
                     }}
@@ -348,7 +353,7 @@ const VideoPlayer = React.memo( ({ socket, room, videoProps, host }) => {
                             const el = document.getElementById("video")
                             screenfull.toggle(el)
                             window.screen.orientation.lock("landscape")
-                            .then(s => {}, f => {})
+                            // .then(s => {}, f => {})
                         }}
                         disableElevation
                     >

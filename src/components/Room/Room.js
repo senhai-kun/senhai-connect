@@ -126,7 +126,7 @@ export default function Room() {
     useEffect( () => {
         socket.current.emit("total_user", room)
         socket.current.emit("get_saved_url", room)
-    }, [socket, notif, room])
+    }, [notif, room])
 
     useEffect( () => {    
         socket.current.on("get_total_user", (data) => {
@@ -151,7 +151,7 @@ export default function Room() {
             })
         // }
         
-    }, [socket, room, video, notif])
+    }, [room, video, notif])
 
 
     useEffect( () => {
