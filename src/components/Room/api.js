@@ -1,3 +1,3 @@
-export const urlSocket = "http://localhost:4000/"
+export const urlSocket = "https://senhai-connect-server.herokuapp.com/"
 // https://senhai-connect-server.herokuapp.com/
 // http://localhost:4000/
