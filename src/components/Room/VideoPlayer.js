@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import ReactPlayer from 'react-player'
-import { Button, Divider, Hidden, makeStyles, TextField, Typography } from '@material-ui/core'
+import { Button, Hidden, makeStyles, TextField, Typography } from '@material-ui/core'
 import { SliderHandle, SliderBar, Buffer } from './ProgressBar'
 import { Slider, Direction, FormattedTime } from 'react-player-controls'
 import screenfull from 'screenfull'
@@ -136,7 +136,7 @@ const VideoPlayer = React.memo( ({ socket, room, videoProps, host }) => {
                 length: data.length
             })
         })
-    }, [videoProps])
+    }, [socket, videoProps])
 
     const [ playing, setPlaying ] = useState(false)
     const [ directLink, setDirectLink ] = useState('')
@@ -150,7 +150,7 @@ const VideoPlayer = React.memo( ({ socket, room, videoProps, host }) => {
         socket.current.on("receive_player_state", (data) => {
             setPlaying(data)
         })
-    }, [playing, video])
+    }, [socket, playing, video])
 
     const onPlay = () => {
         // console.log("play")
@@ -172,7 +172,14 @@ const VideoPlayer = React.memo( ({ socket, room, videoProps, host }) => {
         socket.current.emit("player_state",pause)
         setPlaying(false)
     }
-    
+    const offControls =  useCallback( () => {
+        return setTimeout( () => {
+                setControls(false)
+            }, 3000)
+            
+        }
+    , [controls])
+
     useEffect( () => {
         // console.log(videoRef.current.getCurrentTime())
         let seeking = {
@@ -185,12 +192,10 @@ const VideoPlayer = React.memo( ({ socket, room, videoProps, host }) => {
             setControls(true)
         }
         if(playing) {
-            setTimeout( () => {
-                setControls(false)
-            }, 3000)
+           offControls()
         }
         
-    }, [playing])
+    }, [socket, room, host, playing])
 
     useEffect( () => {
         let currentTime = videoRef.current.getCurrentTime()
@@ -204,7 +209,7 @@ const VideoPlayer = React.memo( ({ socket, room, videoProps, host }) => {
                 }
             // }
         })
-    }, [playing, video.url])
+    }, [socket, playing, video.url])
 
     const onEnded = () => {
         setPlaying(false)
@@ -230,16 +235,58 @@ const VideoPlayer = React.memo( ({ socket, room, videoProps, host }) => {
             directLink: true
         })
     }
-    const onMouseLeave = (e) => {
+    const onMouseLeave = useCallback( (e) => {
         e.preventDefault()
         playing ? setTimeout( () => {
                 setControls(false)
             }, 5000) : setControls(true)
-    }
+    }, [playing])
+
     const onMouseEnter = (e) => {
         e.preventDefault()
         setControls(true)
     }
+    const Player = useMemo( () => (
+        <ReactPlayer   
+            ref={videoRef}
+            config={{
+                youtube: {
+                    playerVars: {
+                        rel: 0,
+                        origin: 'https://www.youtube.com'
+                    }
+                }
+            }}
+            url={video.url}
+            width="100%"
+            height="100%"
+            playing={playing}
+            onStart={ (e) => {
+                // console.log("start", videoRef.current.getDuration())
+                setLoaded(0)
+                setTimeout( () => {
+                    setControls(false)
+                }, 5000)
+                video.direct && setDuration(videoRef.current.getDuration())
+            }}
+            onReady={ (e) => {
+                setProgress(0)
+                // console.log("ready", e.getCurrentTime())
+                !video.direct ? setDuration(e.getDuration()) : setDuration(videoRef.current.getDuration())
+            }}
+            onPlay={onPlay}
+            onPause={onPause}
+            onSeek={ (e) => {   
+                setPlaying(false)
+            }}
+            onProgress={ (e) => {
+                setLoaded(e.loaded)
+                setProgress(e.played)
+            }}
+            onEnded={onEnded}
+        />
+    ), [video, playing])
+
     return (
         <div >
             <div style={{ display: 'flex', justifyContent: 'space-between' }} >
@@ -247,49 +294,7 @@ const VideoPlayer = React.memo( ({ socket, room, videoProps, host }) => {
                 { seeking && <Typography>Seek by: <span style={{ color: 'wheat' }} > {seekBy}</span></Typography>}
             </div>
             <div id="video" className={classes.player} style={{position: 'relative'}} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} >
-                <ReactPlayer   
-                    ref={videoRef}
-                    config={{
-                        youtube: {
-                            playerVars: {
-                                rel: 0,
-                                // origin: window.location.href
-                            }
-                        }
-                    }}
-                    url={video.url}
-                    width="100%"
-                    height="100%"
-                    playing={playing}
-                    onStart={ (e) => {
-                        // console.log("start", videoRef.current.getDuration())
-                        setLoaded(0)
-                        setTimeout( () => {
-                            setControls(false)
-                        }, 5000)
-                        video.direct && setDuration(videoRef.current.getDuration())
-                    }}
-                    onReady={ (e) => {
-                        setProgress(0)
-                        // console.log("ready", e.getCurrentTime())
-                        !video.direct ? setDuration(e.getDuration()) : setDuration(videoRef.current.getDuration())
-                    }}
-                    onPlay={onPlay}
-                    onPause={onPause}
-                    onSeek={ (e) => {   
-                        setPlaying(false)
-                        // console.log("seek", e)
-                    }}
-                    onProgress={ (e) => {
-                        // console.log(e)
-                        setLoaded(e.loaded)
-                        setProgress(e.played)
-                    }}
-                    // onBuffer={ () => {
-                    //     console.log("buffer")
-                    // }}
-                    onEnded={onEnded}
-                />
+                {Player}
                 <div className={ controls ? classes.videoControlWrapper : classes.hide } >
                     <Button 
                         className={classes.playerControlBtn} 
@@ -317,12 +322,12 @@ const VideoPlayer = React.memo( ({ socket, room, videoProps, host }) => {
                                 seekBy: username
                             }
                             socket.current.emit("seek", seeking )
-                            console.log("time", time)
-                            console.log(duration)
+                            // console.log("time", time)
+                            // console.log(duration)
                             videoRef.current.seekTo(time)
                             setProgress(newValue)
                         }}
-                        onChangeStart={startValue => console.log(`started dragging at ${startValue}`)}
+                        // onChangeStart={startValue => console.log(`started dragging at ${startValue}`)}
                         onChangeEnd={endValue => {
                             const time = video.direct ? Number(endValue) * duration : Number(endValue) * (video.length / 1000)
                             let seeking = {
@@ -335,7 +340,6 @@ const VideoPlayer = React.memo( ({ socket, room, videoProps, host }) => {
                             setProgress(endValue)
                         } }
                     >
-                        {/* <ProgressBar isEnabled value={progress} buffer={loaded} direction={Direction.HORIZONTAL}  /> */}
                         <SliderHandle value={progress}  />
                         <SliderBar value={progress} style={{ background: 'red' }} />
                         <Buffer value={loaded} />
@@ -418,8 +422,6 @@ const VideoPlayer = React.memo( ({ socket, room, videoProps, host }) => {
                     Room
                 </Button>
                 
-                {/* { host !== username && <Sync />} */}
-
             </div>
 
             <Collapse in={openDirect} >

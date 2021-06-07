@@ -78,7 +78,7 @@ const styles = makeStyles( (theme) => ({
 }))
 
 export default function Room() {
-    const socket = useRef( io(urlSocket) )
+    const socket = useRef( io(urlSocket, { transports: ['websocket'], upgrade: false } ))
 
     const ref = useRef()
     const classes = styles()
@@ -199,9 +199,10 @@ export default function Room() {
             username: username
         }
         socket.current.emit('leave_room', leave_user)
-        socket.current.on('disconnect', (reason) => {
-            console.log(reason)
-        })
+        // socket.current.on('disconnect', () => {
+        //     console.log("disconnect")
+        // })
+        socket.current.disconnect()
         history.push('/')
     }
 

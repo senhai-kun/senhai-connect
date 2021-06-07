@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { makeStyles, Typography, Paper, Divider } from '@material-ui/core'
 import HomeIcon from '@material-ui/icons/Home';
 import PersonIcon from '@material-ui/icons/Person';
@@ -32,17 +32,20 @@ export const User = React.memo( ({ socket, room, notif }) => {
     const [ users, setUsers ] = useState([])
     const username = localStorage.getItem("username")
 
-    useEffect( () => {
+    const newUsers = useCallback( () => {
         socket.current.on("get_total_user", (data) => {
             setUsers(data)
         })
+    }, [socket])
 
-    }, [socket, room, notif])
+    useEffect( () => {
+        newUsers()
+    }, [socket, room, notif, newUsers])
 
     useEffect( () => {
         socket.current.emit("total_user", room)
 
-    }, [room, socket])
+    }, [socket, notif, room])
 
     return (
         <div className={classes.root} >
