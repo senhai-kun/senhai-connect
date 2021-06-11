@@ -42,9 +42,10 @@ export const SearchBar = ({ setResult, searching, setSearching }) => {
     useEffect( () => {
         searching && setOpen(false)
     }, [searching])
-
+  
     const search = (e) => {
         e.preventDefault()
+        e.target.blur()
         setOpen(false)
         setSearching(true)
         axios.post(`${urlSocket}search`, { query: query })
@@ -63,6 +64,11 @@ export const SearchBar = ({ setResult, searching, setSearching }) => {
         .catch( err => console.error(err))
     }
 
+    const onChange = (e) => {
+        e.target.blur()
+        setQuery(e.target.value)
+    }
+
     return (
         <form onSubmit={search} className={classes.root} >
             <Autocomplete 
@@ -70,7 +76,7 @@ export const SearchBar = ({ setResult, searching, setSearching }) => {
                 fullWidth
                 options={suggest}
                 value={query}
-                onChange={ (e) => setQuery(e.target.value), search }
+                onChange={ (e) => onChange(e), search}
                 onClose={() => setOpen(false)}
                 // autoHighlight
                 open={open}

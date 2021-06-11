@@ -36,7 +36,7 @@ export const User = React.memo( ({ socket, room, notif }) => {
         socket.current.on("get_total_user", (data) => {
             setUsers(data)
         })
-    }, [socket])
+    }, [notif])
 
     useEffect( () => {
         newUsers()
@@ -45,11 +45,11 @@ export const User = React.memo( ({ socket, room, notif }) => {
     useEffect( () => {
         socket.current.emit("total_user", room)
 
-    }, [socket, notif, room])
+    }, [notif, room])
 
     return (
         <div className={classes.root} >
-            <Paper className={classes.paper} >
+            <Paper className={classes.paper} onClick={ (e) => console.log("room")} >
                 <HomeIcon fontSize="small" style={{ marginRight: 3 }} />
                 <Typography>Room: </Typography>
                 <Typography className={classes.roomName} >{room}</Typography>

@@ -1,10 +1,10 @@
 import React from 'react'
-import { Direction, Slider } from 'react-player-controls'
+// import { Direction, Slider } from 'react-player-controls'
 import { makeStyles } from '@material-ui/core'
 
-const WHITE_SMOKE = 'grey'
-const GRAY = '#878c88'
-const GREEN = '#72d687'
+// const WHITE_SMOKE = 'grey'
+// const GRAY = '#878c88'
+// const GREEN = '#72d687'
 const YT = 'red'
 
 const styles = makeStyles( (theme) => ({
@@ -68,30 +68,30 @@ export const SliderHandle = ({ value }) => (
 )
 
 // A composite progress bar component
-const ProgressBar = ({ isEnabled, direction, value, buffer, onChange, onChangeStart, onChangeEnd, ...props }) => (
-  <Slider
-    direction={direction}
-    onChange={onChange}
-    onChangeStart={onChangeStart}
-    onChangeEnd={onChangeEnd}
-    style={{
-      width: '100%',
-      height: 3,
-      borderRadius: 4,
-      background: WHITE_SMOKE,
-      // transition: direction === Direction.HORIZONTAL ? 'width 0.1s' : 'height 0.1s',
-      cursor: isEnabled === true ? 'pointer' : 'default',
-      '&:hover': {
-        transform: 'scale(2.9)',
-        margin: 20
-      }
-    }}
-    {...props}
-  >
-    <SliderBar direction={direction} value={value} style={{ background: isEnabled ? YT : GRAY }} />
-    <SliderHandle direction={direction} value={value} style={{ background: isEnabled ? YT : GRAY }} />
-    <Buffer direction={direction} value={buffer} />
-  </Slider>
-)
+// const ProgressBar = ({ isEnabled, direction, value, buffer, onChange, onChangeStart, onChangeEnd, ...props }) => (
+//   <Slider
+//     direction={direction}
+//     onChange={onChange}
+//     onChangeStart={onChangeStart}
+//     onChangeEnd={onChangeEnd}
+//     style={{
+//       width: '100%',
+//       height: 3,
+//       borderRadius: 4,
+//       background: WHITE_SMOKE,
+//       // transition: direction === Direction.HORIZONTAL ? 'width 0.1s' : 'height 0.1s',
+//       cursor: isEnabled === true ? 'pointer' : 'default',
+//       '&:hover': {
+//         transform: 'scale(2.9)',
+//         margin: 20
+//       }
+//     }}
+//     {...props}
+//   >
+//     <SliderBar direction={direction} value={value} style={{ background: isEnabled ? YT : GRAY }} />
+//     <SliderHandle direction={direction} value={value} style={{ background: isEnabled ? YT : GRAY }} />
+//     <Buffer direction={direction} value={buffer} />
+//   </Slider>
+// )
 
 // export default ProgressBarexport 

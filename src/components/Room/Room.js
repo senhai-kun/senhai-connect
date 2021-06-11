@@ -78,7 +78,7 @@ const styles = makeStyles( (theme) => ({
 }))
 
 export default function Room() {
-    const socket = useRef( io(urlSocket, { transports: ['websocket'], upgrade: false } ))
+    const socket = useRef( io(urlSocket, { transports: ['polling','websocket'] } ))
 
     const ref = useRef()
     const classes = styles()
@@ -162,7 +162,7 @@ export default function Room() {
         socket.current.on("user_left", (data) => {
             setNotif(data.notif)
         })
-    }, [notif])
+    }, [socket, notif])
 
     const selectVideo = (i) => {
         socket.current.emit("play_video", {
