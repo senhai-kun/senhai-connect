@@ -12,6 +12,7 @@ import Collapse from '@material-ui/core/Collapse';
 import HomeIcon from '@material-ui/icons/Home';
 import FullscreenIcon from '@material-ui/icons/Fullscreen';
 import FullscreenExitIcon from '@material-ui/icons/FullscreenExit';
+import { Kdrama } from './Kdrama'
 
 const styles = makeStyles( (theme) => ({
     player: {
@@ -50,8 +51,12 @@ const styles = makeStyles( (theme) => ({
         paddingLeft: 10,
         minWidth: 30
     },
-    fullscreenBtn: {
-
+    kdramaBtn: {
+        marginLeft: theme.spacing(2),
+        backgroundColor: '#8E44AD',
+        '&:hover': {
+            backgroundColor: '#8E44AD',
+        },
     },
     roomBtn: {
         marginLeft: theme.spacing(2),
@@ -142,6 +147,7 @@ const VideoPlayer = React.memo( ({ socket, room, videoProps, host }) => {
     const [ directLink, setDirectLink ] = useState('')
     const [ openDirect, setOpenDirect ] = useState(false)
     const [ openRoom, setOpenRoom ] = useState(false)
+    const [ openKdrama, setKdrama ] = useState(false)
     const [ seekBy, setSeekBy ] = useState('')
     const [ seeking, setSeeking ] = useState(false)
     const [ controls, setControls ] = useState(true)
@@ -252,6 +258,9 @@ const VideoPlayer = React.memo( ({ socket, room, videoProps, host }) => {
         setControls(true)
     }
 
+    // use native video control
+    const [ control, setControl ] = useState(false)
+
     const Player = useMemo( () => (
         <ReactPlayer   
             ref={videoRef}
@@ -264,6 +273,7 @@ const VideoPlayer = React.memo( ({ socket, room, videoProps, host }) => {
                 }
             }}
             url={video.url}
+            controls={control}
             width="100%"
             height="100%"
             playing={playing}
@@ -302,7 +312,7 @@ const VideoPlayer = React.memo( ({ socket, room, videoProps, host }) => {
             </div>
             <div id="video" className={classes.player} style={{position: 'relative'}} onClick={ () => video.direct && setControls(true) } onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} >
                 {Player}
-                <div className={ controls ? classes.videoControlWrapper : classes.hide } >
+                { !control && <div className={ controls ? classes.videoControlWrapper : classes.hide } >
                     <Button 
                         className={classes.playerControlBtn} 
                         color="primary" 
@@ -364,17 +374,14 @@ const VideoPlayer = React.memo( ({ socket, room, videoProps, host }) => {
                             setFullscreen(!fullscreen)
                             const el = document.getElementById("video")
                             screenfull.toggle(el)
-                            window.screen.orientation.lock("landscape")
-                            // .then(s => {}, f => {})
+                            if (window.screen.width < 500) window.screen.orientation.lock("landscape")
                         }}
                         disableElevation
                     >
                         { fullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
                     </Button>  
-                </div>     
+                </div>     }
             </div>
-                        
-       
             
             <div className={classes.titleContainer} >
                 <Typography style={{fontWeight: 'bold'}} >{video.title}</Typography>
@@ -394,26 +401,31 @@ const VideoPlayer = React.memo( ({ socket, room, videoProps, host }) => {
             </div>
 
             <div className={classes.actionContainer} >
-                {/* <Button 
-                    className={classes.playBtn} 
-                    color="primary" 
-                    variant="contained"
-                    size="small" 
-                    onClick={ playing ? onPause : onPlay }
-                >
-                    { playing ? <PauseIcon /> : <PlayArrowIcon />}
-                </Button> */}
-                
                 <Button 
                     variant="contained" 
                     size="small" 
                     color="primary"  
                     onClick={() => {
                         openRoom && setOpenRoom(false)
+                        openKdrama && setKdrama(false)
                         setOpenDirect(!openDirect)
                     }}
                 >
                     Direct
+                </Button>
+
+                <Button 
+                    className={classes.kdramaBtn}
+                    variant="contained" 
+                    size="small" 
+                    color="inherit" 
+                    onClick={() => {
+                        openDirect && setOpenDirect(false)
+                        openRoom && setOpenRoom(false)
+                        setKdrama(!openKdrama)
+                    }}
+                >
+                    K-Drama
                 </Button>
 
                 <Button 
@@ -423,6 +435,7 @@ const VideoPlayer = React.memo( ({ socket, room, videoProps, host }) => {
                     color="inherit" 
                     onClick={() => {
                         openDirect && setOpenDirect(false)
+                        openKdrama && setKdrama(false)
                         setOpenRoom(!openRoom)
                     }}
                     startIcon={<HomeIcon />}
@@ -453,6 +466,8 @@ const VideoPlayer = React.memo( ({ socket, room, videoProps, host }) => {
                     </Button>
                 </form>
             </Collapse>
+
+            <Kdrama socket={socket} open={openKdrama} css={classes.actionContainer} room={room} setVideo={setVideo} control={control} setControl={setControl} />
             
             <Hidden mdUp >
                 <Collapse in={openRoom} >

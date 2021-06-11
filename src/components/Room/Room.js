@@ -114,7 +114,9 @@ export default function Room() {
     useEffect( () => {
         if(username === null) {
             history.push("/")
-        } else {
+        } 
+        if(location.pathname.split('/')[1] === "room") {
+            console.log("join")
             let data = { 
                 room: room, 
                 username: username 
@@ -241,7 +243,7 @@ export default function Room() {
                 <Element id="search" ref={ref} >
                 { searching ?
                     <div>
-                    <Typography>Searching...</Typography>
+                        <Typography>Searching...</Typography>
                     </div>
                     :
                     <Row xs={1} sm={3} md={4} lg={5} style={{ margin: 2 }} >
@@ -255,9 +257,22 @@ export default function Room() {
                                         <div style={{ position: 'relative' }} >
                                             <img src={i.thumbnail.url} alt={""} className={classes.img} />
                                             <Typography variant="inherit" className={classes.duration} >{i.duration_formatted}</Typography>
+                                            <img 
+                                                style={{ 
+                                                    position: 'absolute', 
+                                                    width: 48,
+                                                    borderRadius: '50%',
+                                                    bottom: 0,
+                                                    left: 0,
+                                                    zIndex: 100,
+                                                    margin: 3
+                                                }} 
+                                                src={i.channel.icon} 
+                                                alt="" 
+                                            /> 
                                         </div>
                                         <Media style={{ marginTop: 10 }} >
-                                            <img className={classes.iconChannel} src={i.channel.icon} alt="" /> 
+                                            {/* <img className={classes.iconChannel} src={i.channel.icon} alt="" />  */}
                                             <Media.Body>
                                                 <Typography variant="subtitle1" >{i.title}</Typography>
                                                 <Typography className={classes.channelName} variant="subtitle2" >{i.channel.name}</Typography>
