@@ -57,6 +57,7 @@ const styles = makeStyles( (theme) => ({
         '&:hover': {
             backgroundColor: '#8E44AD',
         },
+        display: 'none'
     },
     roomBtn: {
         marginLeft: theme.spacing(2),
@@ -420,19 +421,19 @@ const VideoPlayer = React.memo( ({ socket, room, videoProps, host }) => {
                     Direct
                 </Button>
 
-//                 <Button 
-//                     className={classes.kdramaBtn}
-//                     variant="contained" 
-//                     size="small" 
-//                     color="inherit" 
-//                     onClick={() => {
-//                         openDirect && setOpenDirect(false)
-//                         openRoom && setOpenRoom(false)
-//                         setKdrama(!openKdrama)
-//                     }}
-//                 >
-//                     K-Drama
-//                 </Button>
+                <Button 
+                    className={classes.kdramaBtn}
+                    variant="contained" 
+                    size="small" 
+                    color="inherit" 
+                    onClick={() => {
+                        openDirect && setOpenDirect(false)
+                        openRoom && setOpenRoom(false)
+                        setKdrama(!openKdrama)
+                    }}
+                >
+                    K-Drama
+                </Button>
 
                 <Button 
                     className={classes.roomBtn}
