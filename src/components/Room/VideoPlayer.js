@@ -257,6 +257,12 @@ const VideoPlayer = React.memo( ({ socket, room, videoProps, host }) => {
         e.preventDefault()
         setControls(true)
     }
+    
+    const onMouseClick = e => {
+        e.preventDefault()
+        video.direct && setControls(true)
+        onMouseLeave(e)
+    }
 
     // use native video control
     const [ control, setControl ] = useState(false)
@@ -310,7 +316,7 @@ const VideoPlayer = React.memo( ({ socket, room, videoProps, host }) => {
                 <Typography>Played by: <span style={{ color: 'wheat' }} > {video.playedBy}</span></Typography>
                 { seeking && <Typography>Seek by: <span style={{ color: 'wheat' }} > {seekBy}</span></Typography>}
             </div>
-            <div id="video" className={classes.player} style={{position: 'relative'}} onClick={ () => video.direct && setControls(true) } onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} >
+            <div id="video" className={classes.player} style={{position: 'relative'}} onClick={onMouseClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} >
                 {Player}
                 { !control && <div className={ controls ? classes.videoControlWrapper : classes.hide } >
                     <Button 
@@ -414,19 +420,19 @@ const VideoPlayer = React.memo( ({ socket, room, videoProps, host }) => {
                     Direct
                 </Button>
 
-                <Button 
-                    className={classes.kdramaBtn}
-                    variant="contained" 
-                    size="small" 
-                    color="inherit" 
-                    onClick={() => {
-                        openDirect && setOpenDirect(false)
-                        openRoom && setOpenRoom(false)
-                        setKdrama(!openKdrama)
-                    }}
-                >
-                    K-Drama
-                </Button>
+//                 <Button 
+//                     className={classes.kdramaBtn}
+//                     variant="contained" 
+//                     size="small" 
+//                     color="inherit" 
+//                     onClick={() => {
+//                         openDirect && setOpenDirect(false)
+//                         openRoom && setOpenRoom(false)
+//                         setKdrama(!openKdrama)
+//                     }}
+//                 >
+//                     K-Drama
+//                 </Button>
 
                 <Button 
                     className={classes.roomBtn}
